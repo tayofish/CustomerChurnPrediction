@@ -2,7 +2,6 @@
 *.pkl
 .env
 *.pdf
-*.npy
 *.zip
 *.h5
 *.hdf5
@@ -13,8 +12,16 @@
 *.ipynb_checkpoints
 *.DS_Store
 .streamlit/
+.env.*
+*.sqlite3
+.DS_Store
+._*
+__MACOSX/
+
+# Local secrets and machine-generated files
 .env
 .env.*
+!.env.example
 *.sqlite3
 .DS_Store
 ._*
