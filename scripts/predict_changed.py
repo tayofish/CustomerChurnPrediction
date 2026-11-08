@@ -86,7 +86,7 @@ def score(df, model, schema):
     probability = model.predict_proba(x)[:, 1]
     risk = pd.cut(probability, [-.001, .30, .60, .80, 1], labels=['Low', 'Moderate', 'High', 'Critical']).astype(str)
     result = pd.DataFrame({'accountid': ids.to_numpy(), 'Churn Probability': probability, 'Risk Segment': risk})
-    result['Revenue at Risk'] = x['rev_per_month'].to_numpy() * probability
+    result['Revenue at Risk'] = pd.to_numeric(  x['rev_per_month'], errors='coerce' ).to_numpy(dtype=float) * probability
     result['Recommended Action'] = [ACTIONS[r] for r in risk]
     return result.sort_values('Churn Probability', ascending=False).reset_index(drop=True)
 

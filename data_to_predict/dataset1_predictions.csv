@@ -1,32 +1,32 @@
 accountid,Churn Probability,Risk Segment,Revenue at Risk,Recommended Action
-CG-0128,0.9528994,Critical,86.71384507417679,"Immediate personalized outreach, complaint resolution and tailored incentives"
-CG-0127,0.9528994,Critical,86.71384507417679,"Immediate personalized outreach, complaint resolution and tailored incentives"
-CG-0140,0.9528994,Critical,86.71384507417679,"Immediate personalized outreach, complaint resolution and tailored incentives"
-CG-0141,0.8982203,Critical,2.6946609020233154,"Immediate personalized outreach, complaint resolution and tailored incentives"
-CG-0142,0.8161918,Critical,,"Immediate personalized outreach, complaint resolution and tailored incentives"
-CG-0117,0.6580527,High,25.006001949310303,"Proactive engagement, targeted retention offers and loyalty incentives"
-CG-0120,0.6281935,High,5.653741478919983,"Proactive engagement, targeted retention offers and loyalty incentives"
-CG-0125,0.56119174,Moderate,2.8059586882591248,Preventive engagement and service improvement
-CG-0116,0.16439329,Low,0.16439329087734222,Routine monitoring and customer engagement
-CG-0130,0.15768677,Low,9.776579737663269,Routine monitoring and customer engagement
-CG-0126,0.11493667,Low,6.206580296158791,Routine monitoring and customer engagement
-CG-0119,0.067487456,Low,7.558595061302185,Routine monitoring and customer engagement
-CG-0138,0.058652893,Low,4.574925631284714,Routine monitoring and customer engagement
-CG-0132,0.03547531,Low,4.824642151594162,Routine monitoring and customer engagement
-CG-0137,0.026231606,Low,1.0754958279430866,Routine monitoring and customer engagement
-CG-0190,0.010999208,Low,1.0889216233044863,Routine monitoring and customer engagement
-CG-0131,0.010999208,Low,1.0889216233044863,Routine monitoring and customer engagement
-CG-0121,0.0062704403,Low,0.288440253585577,Routine monitoring and customer engagement
-CG-0118,0.0060614594,Low,0.4546094569377601,Routine monitoring and customer engagement
-CG-0129,0.0043706163,Low,0.10926540708169341,Routine monitoring and customer engagement
-CG-0139,0.0025829943,Low,0.2970443433150649,Routine monitoring and customer engagement
-CG-0170,0.0025829943,Low,0.2970443433150649,Routine monitoring and customer engagement
-CG-0133,0.0024696751,Low,0.0814992799423635,Routine monitoring and customer engagement
-CG-0124,0.0021722328,Low,0.03692795825190842,Routine monitoring and customer engagement
-CG-0123,0.0016204295,Low,0.19445153418928385,Routine monitoring and customer engagement
-8890054,0.0016204295,Low,0.19445153418928385,Routine monitoring and customer engagement
-CG-0122,0.0013891052,Low,0.11529573344159871,Routine monitoring and customer engagement
-CG-0134,0.0011443932,Low,0.08010752615518868,Routine monitoring and customer engagement
-CG-0136,0.00063040596,Low,0.002521623857319355,Routine monitoring and customer engagement
-CG-0135,0.0002489822,Low,0.026641094620572403,Routine monitoring and customer engagement
-2000543,0.0002489822,Low,0.026641094620572403,Routine monitoring and customer engagement
+CG-0141,0.955,Critical,2.8649999999999998,"Immediate personalized outreach, complaint resolution and tailored incentives"
+CG-0120,0.44,Moderate,3.96,Preventive engagement and service improvement
+CG-0130,0.43,Moderate,26.66,Preventive engagement and service improvement
+CG-0137,0.36,Moderate,14.76,Preventive engagement and service improvement
+CG-0122,0.28,Low,23.240000000000002,Routine monitoring and customer engagement
+CG-0118,0.235,Low,17.625,Routine monitoring and customer engagement
+CG-0138,0.235,Low,18.33,Routine monitoring and customer engagement
+CG-0131,0.235,Low,23.264999999999997,Routine monitoring and customer engagement
+CG-0190,0.235,Low,23.264999999999997,Routine monitoring and customer engagement
+CG-0170,0.22,Low,25.3,Routine monitoring and customer engagement
+CG-0139,0.22,Low,25.3,Routine monitoring and customer engagement
+CG-0140,0.20440526130081937,Low,18.600878778374565,Routine monitoring and customer engagement
+CG-0127,0.20440526130081937,Low,18.600878778374565,Routine monitoring and customer engagement
+CG-0128,0.20440526130081937,Low,18.600878778374565,Routine monitoring and customer engagement
+CG-0116,0.19,Low,0.19,Routine monitoring and customer engagement
+CG-0121,0.17,Low,7.82,Routine monitoring and customer engagement
+CG-0132,0.16,Low,21.76,Routine monitoring and customer engagement
+CG-0117,0.15,Low,5.7,Routine monitoring and customer engagement
+CG-0133,0.15,Low,4.95,Routine monitoring and customer engagement
+CG-0142,0.1314668896550179,Low,,Routine monitoring and customer engagement
+CG-0126,0.105,Low,5.67,Routine monitoring and customer engagement
+2000543,0.105,Low,11.235,Routine monitoring and customer engagement
+CG-0135,0.105,Low,11.235,Routine monitoring and customer engagement
+CG-0125,0.10366429913125147,Low,0.5183214956562574,Routine monitoring and customer engagement
+CG-0124,0.09,Low,1.53,Routine monitoring and customer engagement
+CG-0136,0.08615169964485034,Low,0.34460679857940135,Routine monitoring and customer engagement
+CG-0129,0.085,Low,2.125,Routine monitoring and customer engagement
+CG-0119,0.07194541210662084,Low,8.057886155941533,Routine monitoring and customer engagement
+CG-0134,0.065,Low,4.55,Routine monitoring and customer engagement
+CG-0123,0.045,Low,5.3999999999999995,Routine monitoring and customer engagement
+8890054,0.045,Low,5.3999999999999995,Routine monitoring and customer engagement

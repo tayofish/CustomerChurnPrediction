@@ -77,7 +77,8 @@ def score(df):
         if f in x: result[f]=x[f].to_numpy()
     result['Churn Probability']=probability
     result['Risk Segment']=risk
-    if 'rev_per_month' in x: result['Revenue at Risk']=x['rev_per_month'].to_numpy()*probability
+    if 'rev_per_month' in x:
+     result['Revenue at Risk']=pd.to_numeric(x['rev_per_month'],errors='coerce').to_numpy()*probability
     result['Recommended Action']=[ACTIONS[r] for r in risk]
     return result.sort_values('Churn Probability',ascending=False).reset_index(drop=True)
 
@@ -200,7 +201,8 @@ elif page=='Batch Prediction':
         except Exception as e: st.error(str(e))
 else:
     st.subheader('Model Information')
-    name=Path(schema['model_file']).stem.removeprefix('churnguard_').replace('_',' ').title()
+    # Identify the actual classifier from the loaded model.
+    name=re.sub(r'(?<!^)(?=[A-Z])',' ',type(model.named_steps['classifier']).__name__.removesuffix('Classifier'))
     st.write('**Selected Model:**',name)
     st.write('**Model Type:** Supervised binary classification')
     st.write('**Target:** Churn')
