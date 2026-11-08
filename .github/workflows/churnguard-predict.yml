@@ -26,6 +26,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
+          lfs: true
           fetch-depth: 0
           persist-credentials: true
 
@@ -80,6 +81,16 @@ jobs:
           else
             python -m scripts.predict_changed
           fi
+      
+      - name: Send high-risk email notifications
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SENDER: ${{ secrets.SMTP_SENDER }}
+          SMTP_RECIPIENTS: ${{ secrets.SMTP_RECIPIENTS }}
+        run: python -m scripts.notify_risks
 
 
       - name: Send high-risk email notifications
