@@ -1,10 +1,14 @@
-name: ChurnGuard - Predict changed datasets
+
+name: ChurnGuard - Automated Churn Prediction
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - 'data/**/*.csv'
-      - 'data/**/*.xlsx'
+      - 'data_to_predict/**/*.csv'
+      - 'data_to_predict/**/*.xlsx'
+
   workflow_dispatch:
 
 permissions:
@@ -16,28 +20,54 @@ concurrency:
 
 jobs:
   score:
+    name: Automated Churn Prediction
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
     steps:
-      - uses: actions/checkout@v4
+      # Checkout repository with full Git history
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+
+      # Install Python and enable pip caching
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: pip
-      - name: Install model and scoring dependencies
-        run: pip install -r requirements.txt
-      - name: Score changed datasets
+          cache-dependency-path: requirements.txt
+
+      # Install prediction dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Verify required files exist
+      - name: Verify ChurnGuard model
+        run: |
+          test -f models/churnguard_xgboost.joblib
+          test -f models/feature_schema.json
+          test -f scripts/predict_changed.py
+          echo "Model and scoring script verified."
+
+      # Predict changed files on push
+      # Predict all files when manually triggered
+      - name: Run automated churn predictions
         env:
           BEFORE_SHA: ${{ github.event.before }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             python scripts/predict_changed.py --all
           else
             python scripts/predict_changed.py
           fi
-      - name: Upload prediction outputs and summary
+
+      # Upload prediction results for download
+      - name: Upload prediction results
         if: always()
         uses: actions/upload-artifact@v4
         with:
