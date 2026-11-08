@@ -21,6 +21,7 @@ jobs:
     name: Automated Churn Prediction
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -42,20 +43,55 @@ jobs:
 
       - name: Verify ChurnGuard files
         run: |
-          test -f models/churnguard_xgboost.joblib
           test -f models/feature_schema.json
           test -f scripts/predict_changed.py
+          test -f scripts/preprocessing.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          schema=json.loads(Path('models/feature_schema.json').read_text(encoding='utf-8'))
+          model_path=Path('models')/schema['model_file']
+          assert model_path.is_file(),f'Model not found: {model_path}'
+          print(f'Model verified: {model_path}')
+          PY
+
+      - name: Verify model loading
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python - <<'PY'
+          import json,joblib
+          from pathlib import Path
+
+          schema=json.loads(Path('models/feature_schema.json').read_text(encoding='utf-8'))
+          model=joblib.load(Path('models')/schema['model_file'])
+          print(f'Model loaded: {type(model.named_steps["classifier"]).__name__}')
+          PY
 
       - name: Run automated churn predictions
         env:
+          PYTHONPATH: ${{ github.workspace }}
           BEFORE_SHA: ${{ github.event.before }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            python scripts/predict_changed.py --all
+            python -m scripts.predict_changed --all
           else
-            python scripts/predict_changed.py
+            python -m scripts.predict_changed
           fi
+
+
+      - name: Send high-risk email notifications
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SENDER: ${{ secrets.SMTP_SENDER }}
+          SMTP_RECIPIENTS: ${{ secrets.SMTP_RECIPIENTS }}
+        run: python -m scripts.notify_risks
+
 
       - name: Commit generated predictions
         if: success()
