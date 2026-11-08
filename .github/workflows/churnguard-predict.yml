@@ -27,7 +27,7 @@ jobs:
     steps:
       # Checkout repository with full Git history
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -69,9 +69,9 @@ jobs:
       # Upload prediction results for download
       - name: Upload prediction results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: churnguard-predictions-${{ github.run_id }}
           path: outputs/automation/
-          if-no-files-found: warn
+          if-no-files-found: ignore
           retention-days: 30
