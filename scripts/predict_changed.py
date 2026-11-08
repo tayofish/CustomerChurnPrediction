@@ -18,16 +18,34 @@ ACTIONS = {'Critical':'Immediate personalized outreach, complaint resolution and
 
 
 def changed_files(before, after):
+    folder = 'data_to_predict/'
+
     if not before or set(before) == {'0'}:
-        args = ['git','ls-tree','-r','--name-only',after,'--','data/']
+        args = [
+            'git', 'ls-tree', '-r', '--name-only',
+            after, '--', folder
+        ]
     else:
-        args = ['git','diff','--name-status','--diff-filter=AMR',before,after,'--','data/']
-    result = subprocess.check_output(args,text=True)
-    if not before or set(before)=={'0'}:
-        paths = result.splitlines()
-    else:
-        paths = [line.split('\t')[-1] for line in result.splitlines()]
-    return sorted({p for p in paths if p.lower().endswith(('.csv','.xlsx')) and Path(p).is_file() and Path(p).parts[0]=='data'})
+        args = [
+            'git', 'diff', '--name-status',
+            '--diff-filter=AMR',
+            before, after, '--', folder
+        ]
+
+    result = subprocess.check_output(args, text=True)
+
+    paths = (
+        result.splitlines()
+        if not before or set(before) == {'0'}
+        else [line.split('\t')[-1] for line in result.splitlines()]
+    )
+
+    return sorted({
+        p for p in paths
+        if p.lower().endswith(('.csv', '.xlsx'))
+        and Path(p).is_file()
+        and Path(p).parts[0] == 'data_to_predict'
+    })
 
 
 def read_table(path):
@@ -83,35 +101,89 @@ def score(df, model, schema):
     return result.sort_values('Churn Probability',ascending=False).reset_index(drop=True)
 
 
+
 def main():
-    p=argparse.ArgumentParser()
-    p.add_argument('--before',default=os.getenv('BEFORE_SHA',''))
-    p.add_argument('--after',default=os.getenv('GITHUB_SHA','HEAD'))
-    p.add_argument('--all',action='store_true',help='Process all CSV/XLSX under data/')
-    args=p.parse_args()
-    files=sorted(str(p) for p in Path('data').rglob('*') if p.is_file() and p.suffix.lower() in ('.csv','.xlsx')) if args.all else changed_files(args.before,args.after)
-    output=Path('outputs/automation');output.mkdir(parents=True,exist_ok=True)
+    p = argparse.ArgumentParser()
+    p.add_argument('--before', default=os.getenv('BEFORE_SHA', ''))
+    p.add_argument('--after', default=os.getenv('GITHUB_SHA', 'HEAD'))
+    p.add_argument(
+        '--all',
+        action='store_true',
+        help='Process all CSV/XLSX files under data_to_predict/'
+    )
+    args = p.parse_args()
+
+    input_dir = Path('data_to_predict')
+    output = Path('outputs/automation')
+    output.mkdir(parents=True, exist_ok=True)
+
+    files = (
+        sorted(
+            str(f)
+            for f in input_dir.rglob('*')
+            if f.is_file() and f.suffix.lower() in ('.csv', '.xlsx')
+        )
+        if args.all
+        else changed_files(args.before, args.after)
+    )
+
     if not files:
         print('No added/modified CSV/XLSX files; nothing to score.')
         return
-    schema=json.loads(Path('models/feature_schema.json').read_text(encoding='utf-8'))
-    model=joblib.load(Path('models')/schema['model_file'])
-    report=[]; failures=[]
+
+    schema = json.loads(
+        Path('models/feature_schema.json').read_text(encoding='utf-8')
+    )
+    model = joblib.load(Path('models') / schema['model_file'])
+
+    report = []
+    failures = []
+
     for name in files:
         try:
-            path=Path(name)
-            result=score(read_table(path),model,schema)
-            key=hashlib.sha256(name.encode()).hexdigest()[:10]
-            destination=output/f'{path.stem}_{key}_predictions.csv'
-            result.to_csv(destination,index=False)
-            report.append({'source':name,'output':str(destination),'rows':len(result),'critical':int(result['Risk Segment'].eq('Critical').sum()),'high':int(result['Risk Segment'].eq('High').sum())})
-            print(f'Scored {name}: {len(result)} accounts -> {destination}')
-        except Exception as e:
-            failures.append({'source':name,'error':str(e)})
-            print(f'FAILED {name}: {e}',file=sys.stderr)
-    (output/'run_summary.json').write_text(json.dumps({'processed':report,'failed':failures},indent=2),encoding='utf-8')
-    if failures:
-        raise SystemExit(f'{len(failures)} file(s) failed validation/scoring')
+            path = Path(name)
+            result = score(read_table(path), model, schema)
 
-if __name__=='__main__':
+            key = hashlib.sha256(name.encode()).hexdigest()[:10]
+            destination = output / f'{path.stem}_{key}_predictions.csv'
+
+            result.to_csv(destination, index=False)
+
+            report.append({
+                'source': name,
+                'output': str(destination),
+                'rows': len(result),
+                'critical': int(result['Risk Segment'].eq('Critical').sum()),
+                'high': int(result['Risk Segment'].eq('High').sum())
+            })
+
+            print(
+                f'Scored {name}: {len(result)} accounts -> {destination}'
+            )
+
+        except Exception as e:
+            failures.append({
+                'source': name,
+                'error': str(e)
+            })
+            print(f'FAILED {name}: {e}', file=sys.stderr)
+
+    (output / 'run_summary.json').write_text(
+        json.dumps({
+            'processed': report,
+            'failed': failures
+        }, indent=2),
+        encoding='utf-8'
+    )
+
+    if failures:
+        raise SystemExit(
+            f'{len(failures)} file(s) failed validation/scoring'
+        )
+
+    print(f'Completed successfully: {len(report)} dataset(s) scored.')
+
+
+if __name__ == '__main__':
     main()
+
