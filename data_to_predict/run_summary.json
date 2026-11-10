@@ -3,7 +3,7 @@
     {
       "source": "data_to_predict/dataset1.csv",
       "output": "data_to_predict/dataset1_predictions.csv",
-      "rows": 31,
+      "rows": 35,
       "critical": 1,
       "high": 0
     }
