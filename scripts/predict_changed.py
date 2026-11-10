@@ -1,16 +1,17 @@
-"""Score changed ChurnGuard datasets and save predictions alongside inputs."""
+"""Score new or modified customer datasets using the trained ChurnGuard model."""
 import argparse
 import io
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 import joblib
 import pandas as pd
 
+# Input location, validation rules and retention recommendations.
 INPUT_DIR = Path('data_to_predict')
 BOUNDS = {'tenure': (0, 99), 'city_tier': (1, 3), 'cc_contacted_ly': (4, 132), 'service_score': (0, 5), 'account_user_count': (1, 6), 'cc_agent_score': (1, 5), 'rev_per_month': (1, 140), 'complain_ly': (0, 1), 'rev_growth_yoy': (4, 28), 'coupon_used_for_payment': (0, 16), 'day_since_cc_connect': (0, 47), 'cashback': (0, 1997)}
 CATEGORIES = {'payment': ['cash on delivery', 'credit card', 'debit card', 'e wallet', 'upi'], 'gender': ['female', 'male'], 'account_segment': ['hni', 'regular', 'regular plus', 'super', 'super plus'], 'marital_status': ['divorced', 'married', 'single'], 'login_device': ['computer', 'mobile', 'others']}
@@ -18,6 +19,7 @@ ACTIONS = {'Critical': 'Immediate personalized outreach, complaint resolution an
 
 
 def is_input(path):
+    """Accept existing CSV/XLSX inputs, excluding generated prediction files."""
     path = Path(path)
     return (path.parts and path.parts[0] == INPUT_DIR.name
             and path.suffix.lower() in ('.csv', '.xlsx')
@@ -26,18 +28,17 @@ def is_input(path):
 
 
 def changed_files(before, after):
+    """Find added, modified or renamed datasets between Git commits."""
     if not before or set(before) == {'0'}:
         command = ['git', 'ls-tree', '-r', '--name-only', after, '--', f'{INPUT_DIR}/']
-        output = subprocess.check_output(command, text=True)
-        paths = output.splitlines()
     else:
         command = ['git', 'diff', '--name-only', '--diff-filter=AMR', before, after, '--', f'{INPUT_DIR}/']
-        output = subprocess.check_output(command, text=True)
-        paths = output.splitlines()
+    paths = subprocess.check_output(command, text=True).splitlines()
     return sorted({path for path in paths if is_input(path)})
 
 
 def read_table(path):
+    """Read CSV/XLSX data, preserving account IDs and handling common encodings."""
     raw = path.read_bytes()
     if not raw:
         raise ValueError('Empty file')
@@ -56,20 +57,26 @@ def read_table(path):
 
 
 def score(df, model, schema):
+    """Validate customer records and calculate churn risk and recommended actions."""
     df = df.copy()
     df.columns = [re.sub(r'[\s-]+', '_', str(c).strip().lower()) for c in df.columns]
     if df.columns.duplicated().any() or df.empty:
         raise ValueError('Duplicate columns or no rows')
     if 'accountid' not in df:
         raise ValueError('Missing accountid')
+
+    # Account identifiers must be present and unique.
     ids = df['accountid'].astype('string').str.strip()
     if ids.isna().any() or ids.eq('').any() or ids.duplicated().any():
         raise ValueError('Blank or duplicate accountid')
+
     features = schema['features']
     missing = [f for f in features if f not in df.columns]
     if missing:
         raise ValueError('Missing features: ' + ', '.join(missing))
     x = df[features].copy()
+
+    # Validate numerical ranges and allowed categorical values.
     for feature in schema['numeric']:
         x[feature] = pd.to_numeric(x[feature], errors='coerce')
         if feature in BOUNDS:
@@ -83,30 +90,36 @@ def score(df, model, schema):
             invalid = nonnull[~nonnull.isin(CATEGORIES[feature])].unique().tolist()
             if invalid:
                 raise ValueError(f'Unsupported {feature}: {invalid}')
+
+    # Convert predicted probabilities into business risk segments.
     probability = model.predict_proba(x)[:, 1]
     risk = pd.cut(probability, [-.001, .30, .60, .80, 1], labels=['Low', 'Moderate', 'High', 'Critical']).astype(str)
     result = pd.DataFrame({'accountid': ids.to_numpy(), 'Churn Probability': probability, 'Risk Segment': risk})
-    result['Revenue at Risk'] = pd.to_numeric(  x['rev_per_month'], errors='coerce' ).to_numpy(dtype=float) * probability
+    result['Revenue at Risk'] = pd.to_numeric(x['rev_per_month'], errors='coerce').to_numpy(dtype=float) * probability
     result['Recommended Action'] = [ACTIONS[r] for r in risk]
     return result.sort_values('Churn Probability', ascending=False).reset_index(drop=True)
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    """Select datasets, load the trained model, save predictions and log outcomes."""
+    parser = argparse.ArgumentParser(description='Automated ChurnGuard batch scoring')
     parser.add_argument('--before', default=os.getenv('BEFORE_SHA', ''))
     parser.add_argument('--after', default=os.getenv('GITHUB_SHA', 'HEAD'))
-    parser.add_argument('--all', action='store_true', help='Score all input CSV/XLSX files in data_to_predict/')
+    parser.add_argument('--all', action='store_true', help='Score all input CSV/XLSX files')
     args = parser.parse_args()
 
-    files = (sorted(str(path) for path in INPUT_DIR.rglob('*') if is_input(path))
+    # Process all datasets or only those changed in Git.
+    files = (sorted(str(p) for p in INPUT_DIR.rglob('*') if is_input(p))
              if args.all else changed_files(args.before, args.after))
     if not files:
         print('No added/modified input CSV/XLSX files; nothing to score.')
         return
 
+    # Load the final model using its saved feature schema.
     schema = json.loads(Path('models/feature_schema.json').read_text(encoding='utf-8'))
     model = joblib.load(Path('models') / schema['model_file'])
     processed, failures = [], []
+
     for name in files:
         path = Path(name)
         try:
@@ -121,6 +134,7 @@ def main():
             failures.append({'source': name, 'error': str(exc)})
             print(f'FAILED {name}: {exc}', file=sys.stderr)
 
+    # Save execution results for downstream automation and troubleshooting.
     summary = INPUT_DIR / 'run_summary.json'
     summary.write_text(json.dumps({'processed': processed, 'failed': failures}, indent=2), encoding='utf-8')
     if failures:
