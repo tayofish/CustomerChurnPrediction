@@ -1,5 +1,4 @@
 accountid,Churn Probability,Risk Segment,Revenue at Risk,Recommended Action
-CG-0141,0.955,Critical,2.8649999999999998,"Immediate personalized outreach, complaint resolution and tailored incentives"
 CG-0120,0.44,Moderate,3.96,Preventive engagement and service improvement
 AB-0120,0.44,Moderate,3.96,Preventive engagement and service improvement
 CG-0130,0.43,Moderate,26.66,Preventive engagement and service improvement
