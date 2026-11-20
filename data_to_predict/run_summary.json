@@ -3,8 +3,8 @@
     {
       "source": "data_to_predict/dataset1.csv",
       "output": "data_to_predict/dataset1_predictions.csv",
-      "rows": 35,
-      "critical": 1,
+      "rows": 36,
+      "critical": 2,
       "high": 0
     }
   ],
